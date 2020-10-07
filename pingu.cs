@@ -8,6 +8,7 @@ using System.Collections.Generic;
  
 namespace PingUtility
 {
+    
     public class BoxBlock{
         public string Title { get; set; }
         public string LineClear { get; set; }
@@ -50,7 +51,7 @@ namespace PingUtility
             FailedPings = 0;
             TotalPings = 0;
             Block = new BoxBlock(Address);
-            BuildBlock();
+            //BuildBlock();
 
         }
         protected static int origRow;
@@ -188,32 +189,59 @@ namespace PingUtility
         static void Main(string[] args)
         {
  
-            string Version = "2020.3.11.14.30";
-            Console.Title = String.Format("Ping Utility Version {0} Started: {1}", Version, DateTime.Now.ToString("hh:mm:ss tt")); //result 11:11:45 PM
+            string Version = "2020.10.7.11.55";
+            string WindowTitle = String.Format("Ping Utility Version {0} Started: {1}", Version, DateTime.Now.ToString("hh:mm:ss tt")); //result 11:11:45 PM
+            Console.Title = WindowTitle;
             Console.BackgroundColor = ConsoleColor.Black;
             Console.ForegroundColor = ConsoleColor.White;
             Console.Clear();
             
-            int BlockWidth = 6;
+            int BlockHeight = 6; // Set the Height of each box and spacer
+            int DefaultWidth = 16 + 30; // Block Width + Status message width 
+            int ActualWidth = WindowTitle.Length; // Default to the length of the title, so that we can put it at the top/
  
             List<PingBlock> PingList = new List<PingBlock>();
             for (int i = 0; i < args.Length; i++){
-                PingList.Add(new PingBlock(args[i], 0, i * BlockWidth));
-                Console.WindowHeight = (i * BlockWidth) + BlockWidth;
+                // Ignore anything past 10, since that is all this handles at the moment
+                if (i > 10){
+                    continue;
+                }
+                // Set the width to the widest box
+                if (args[i].Length + DefaultWidth > ActualWidth){
+                    ActualWidth = args[i].Length + DefaultWidth;
+                }
+                PingList.Add(new PingBlock(args[i], 0, (i * BlockHeight)));
+                Console.WindowHeight = (i * BlockHeight) + BlockHeight;
             }
+
+            // Set the Width and redraw
+            Console.WindowWidth = ActualWidth;
+            Console.BufferWidth = ActualWidth;
+            Console.Clear();
+
+            /* Not able to get this to work yet
+
+            // Write the title on the first line
+            Console.SetCursorPosition(0, 0);
+            Console.Write(WindowTitle);
+
+            */
+
+            // Redraw the blocks
+            foreach (PingBlock block in PingList){
+                block.BuildBlock();
+            }
+
+            // This is to only get rid of the scroll bar
+            Console.BufferHeight = Console.WindowHeight;
  
+            // The real work
             while (true){
                 foreach (PingBlock block in PingList){
-                block.Progress();
-            }
+                    block.Progress();
+                }
                 System.Threading.Thread.Sleep(1500);
             }
         }
     }
 }
-
-
-
-
-
-// reserved comments
