@@ -38,6 +38,8 @@ namespace PingUtility
         public decimal FailedPings { get; set; }
         public string LastSuccessful { get; set; }
         public string LastFailure { get; set; }
+        public long MinResponse { get; set; }
+        public long MaxResponse { get; set; }
         public BoxBlock Block { get; set; }
 	public long TripTime { get; set; }
         public PingBlock(string address, int x, int y)
@@ -141,7 +143,18 @@ namespace PingUtility
             
             if (reply.Status == IPStatus.Success)
             {
+                // Determine Min/Max/Current of Reponse Times
 		        TripTime = reply.RoundtripTime;
+                if (TripTime > MaxResponse){
+                    MaxResponse = TripTime;
+                }
+                if (TripTime < MinResponse){
+                    MinResponse = TripTime;
+                }
+                // Such a hack I hate it
+                if (MinResponse == 0){
+                    MinResponse = 100;
+                }
                 return true;
             } else {
                 return false;
@@ -180,7 +193,20 @@ namespace PingUtility
             }
             Uptime = 100 - ((FailedPings / TotalPings) * 100);
             WriteAt(String.Format("{2}/{1} {0:0}%   ", Uptime, TotalPings, Faults), 2, 1);
-	        WriteAt(String.Format("{0}ms   ", TripTime), 2, 2);
+            // Format our reponse times, then extend them to the length of the box.
+            string MinR = String.Format("{0}ms", MinResponse);
+            string MaxR = String.Format("{0}ms", MaxResponse);
+            string TripR = String.Format("{0}ms", TripTime);
+            decimal Spacers = Math.Floor((Convert.ToDecimal(BoxLength) - (Convert.ToDecimal(MinR.Length) + Convert.ToDecimal(MaxR.Length) + Convert.ToDecimal(TripR.Length))) / 2) - 2;
+            string Space = "";
+            for (int i = 0; i < Spacers; i++){
+                Space = Space + " ";
+            }
+            string ResponseTimes = String.Format("{0}{3}{1}{3}{2}", MinR, TripR, MaxR, Space);
+            while (ResponseTimes.Length +2 < BoxLength){
+                ResponseTimes += " ";
+            }
+	        WriteAt(ResponseTimes, 2, 2);
             WriteAt(" ", ProgressBar, 3, result);
         }
     }
@@ -189,7 +215,7 @@ namespace PingUtility
         static void Main(string[] args)
         {
  
-            string Version = "2020.10.7.11.55";
+            string Version = "2020.10.12.19.00";
             string WindowTitle = String.Format("Ping Utility Version {0} Started: {1}", Version, DateTime.Now.ToString("hh:mm:ss tt")); //result 11:11:45 PM
             Console.Title = WindowTitle;
             Console.BackgroundColor = ConsoleColor.Black;
